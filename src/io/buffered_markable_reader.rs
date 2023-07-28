@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use super::{buffer::Buffer, DEFAULT_BUFFER_SIZE, DEFAULT_MARKER_BUFFER_SIZE};
+use super::{buffer::Buffer, MarkerStream, DEFAULT_BUFFER_SIZE, DEFAULT_MARKER_BUFFER_SIZE};
 
 /// Reads bytes from the inner source with the additional ability
 /// to `mark` a stream at a point that can be returned to later
@@ -98,22 +98,6 @@ where
         self.inner
     }
 
-    /// Marks the location of the inner stream. From tis point forward
-    /// reads will be cached. If the stream was marked prior to this call
-    /// the current buffer will be discarded.
-    ///
-    /// Returns the number of bytes that were discarded as a result of this operation
-    pub fn mark(&mut self) -> usize {
-        self.is_marked = true;
-        self.mark_buffer.clear()
-    }
-
-    /// Resets the stream previously marked position, if it is set.
-    /// If the reader was not previously marked, this has no affect.
-    pub fn reset(&mut self) {
-        self.is_marked = false;
-    }
-
     /// Reads at most `buf.len()` bytes from the underlying buffers to fill the provided buffer.
     fn read_into_buf(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         // If marked, then we only read from the read buffer and all
@@ -185,6 +169,24 @@ where
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.read_into_buf(buf)
+    }
+}
+
+impl<R> MarkerStream for BufferedMarkableReader<R> {
+    /// Marks the location of the inner stream. From tis point forward
+    /// reads will be cached. If the stream was marked prior to this call
+    /// the current buffer will be discarded.
+    ///
+    /// Returns the number of bytes that were discarded as a result of this operation
+    fn mark(&mut self) -> usize {
+        self.is_marked = true;
+        self.mark_buffer.clear()
+    }
+
+    /// Resets the stream previously marked position, if it is set.
+    /// If the reader was not previously marked, this has no affect.
+    fn reset(&mut self) {
+        self.is_marked = false;
     }
 }
 
