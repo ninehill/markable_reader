@@ -1,0 +1,13 @@
+[package]
+name = "markable_reader"
+version = "1.0.0"
+edition = "2021"
+authors = ["Nine Hill Technologies"]
+description = "Provides a reader which can be marked in a position to be returned to after subsequent reads"
+readme = "README.md"
+repository = "https://github.com/ninehill/markable_reader"
+license = "MIT"
+keywords = ["reader", "buffered", "markable"]
+categories = ["memory-management"]
+
+[dependencies]
