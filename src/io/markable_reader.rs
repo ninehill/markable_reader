@@ -180,6 +180,8 @@ where
 mod tests {
     use std::io::{Cursor, Read};
 
+    use crate::io::MarkerStream;
+
     use super::MarkableReader;
 
     #[test]

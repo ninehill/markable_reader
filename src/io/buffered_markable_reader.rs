@@ -194,6 +194,8 @@ impl<R> MarkerStream for BufferedMarkableReader<R> {
 mod tests {
     use std::io::{Cursor, Read};
 
+    use crate::io::MarkerStream;
+
     use super::BufferedMarkableReader;
 
     #[test]
@@ -265,6 +267,20 @@ mod tests {
         assert_eq!(
             input_data, whole_buf,
             "input data and whole buf should match"
+        );
+    }
+
+    #[test]
+    fn test_attempt_to_overread() {
+        let input_data = vec![0, 1, 2, 3];
+        let data = Cursor::new(input_data.clone());
+        let mut reader = BufferedMarkableReader::new(data);
+
+        let mut buf = vec![0; input_data.len() * 2];
+        assert_eq!(
+            input_data.len(),
+            reader.read(&mut buf).unwrap(),
+            "Should have read entire buffer"
         );
     }
 }
