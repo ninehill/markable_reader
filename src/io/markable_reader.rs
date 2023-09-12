@@ -165,6 +165,11 @@ impl<R> MarkerStream for MarkableReader<R> {
     fn reset(&mut self) {
         self.is_marked = false;
     }
+
+    fn clear_buffer(&mut self) {
+        self.is_marked = false;
+        self.mark_buffer.clear();
+    }    
 }
 
 impl<R> std::io::Read for MarkableReader<R>

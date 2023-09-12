@@ -1,6 +1,9 @@
 mod buffer;
-pub mod buffered_markable_reader;
-pub mod markable_reader;
+mod buffered_markable_reader;
+mod markable_reader;
+
+pub use buffered_markable_reader::BufferedMarkableReader;
+pub use markable_reader::MarkableReader;
 
 const DEFAULT_BUFFER_SIZE: usize = 8 * 1024;
 const DEFAULT_MARKER_BUFFER_SIZE: usize = 2 * 1024;
@@ -16,4 +19,7 @@ pub trait MarkerStream {
     /// Resets the stream previously marked position, if it is set.
     /// If the reader was not previously marked, this has no affect.
     fn reset(&mut self);
+
+    /// Clears the current buffer dropping any values that have been cached.
+    fn clear_buffer(&mut self);
 }
