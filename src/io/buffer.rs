@@ -29,8 +29,9 @@ impl Buffer {
     /// Reads values from this buffer into the provided `buf`.
     /// Returns the number of bytes placed in the provided `buf`
     pub fn read_into(&mut self, buf: &mut [u8], offset: usize) -> usize {
-        let requested_byte_count = (buf.len() - offset).min(buf.len());
-        let bytes_to_read = self.buffer.len().min(requested_byte_count);
+        let requested_byte_count = buf.len() - offset.min(buf.len());
+        let internal_buffer_remaining = self.buffer.len() - self.pos.min(self.buffer.len());
+        let bytes_to_read = internal_buffer_remaining.min(requested_byte_count);
 
         for i in 0..bytes_to_read {
             buf[i + offset] = self.buffer[i + self.pos];
