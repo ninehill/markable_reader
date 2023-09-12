@@ -1,6 +1,6 @@
 [package]
 name = "markable_reader"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
 authors = ["Nine Hill Technologies"]
 description = "Provides a reader which can be marked in a position to be returned to after subsequent reads"
