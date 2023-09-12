@@ -181,6 +181,15 @@ where
     }
 }
 
+impl<R> From<R> for MarkableReader<R>
+where
+    R: std::io::Read,
+{
+    fn from(value: R) -> Self {
+        MarkableReader::new(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::{Cursor, Read};

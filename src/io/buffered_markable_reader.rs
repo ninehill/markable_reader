@@ -195,6 +195,15 @@ impl<R> MarkerStream for BufferedMarkableReader<R> {
     }
 }
 
+impl<R> From<R> for BufferedMarkableReader<R>
+where
+    R: std::io::Read,
+{
+    fn from(value: R) -> Self {
+        BufferedMarkableReader::new(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::{Cursor, Read};
