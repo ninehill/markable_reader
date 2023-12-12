@@ -106,8 +106,12 @@ where
         // bytes from the read buffer, which may need to be filled.
 
         if self.is_marked {
-            // If marked, just read from internal stream and push to mark buffer
-            self.read_data_into_buf_and_marked_stream(buf)
+            //First grab what we can from the mark buffer
+            let buffer_bytes_read = self.mark_buffer.read_into(buf, 0);
+            // Then fill and retain remaining from the inner reader
+            let inner_bytes_read =
+                self.read_data_into_buf_and_marked_stream(buf, buffer_bytes_read)?;
+            Ok(buffer_bytes_read + inner_bytes_read)
         } else {
             // Otherwise, read what we can from the mark buffer and then go to the read buffer
             // for any remaining bytes
@@ -124,14 +128,18 @@ where
 
     /// Fills the provided buffer with bytes from the underlying stream and also places those
     /// bytes into the mark buffer
-    fn read_data_into_buf_and_marked_stream(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let bytes_read = self.fill_from_read_buffer(buf, 0)?;
-        if bytes_read > 0 {
-            self.mark_buffer.write_all(buf)?;
-            Ok(bytes_read)
-        } else {
-            Err(std::io::Error::from(std::io::ErrorKind::UnexpectedEof))
+    fn read_data_into_buf_and_marked_stream(
+        &mut self,
+        buf: &mut [u8],
+        offset: usize,
+    ) -> std::io::Result<usize> {
+        let inner_bytes_read = self.fill_from_read_buffer(buf, offset)?;
+        if inner_bytes_read > 0 {
+            let inner_bytes = &buf[buf.len() - inner_bytes_read..buf.len()];
+            self.mark_buffer.write(inner_bytes)?;
         }
+
+        Ok(inner_bytes_read)
     }
 
     /// Fills the provided buffer with bytes from the read buffer starting with at the provided offset
@@ -180,13 +188,14 @@ impl<R> MarkerStream for BufferedMarkableReader<R> {
     /// Returns the number of bytes that were discarded as a result of this operation
     fn mark(&mut self) -> usize {
         self.is_marked = true;
-        self.mark_buffer.clear()
+        self.mark_buffer.purge_read()
     }
 
     /// Resets the stream previously marked position, if it is set.
     /// If the reader was not previously marked, this has no affect.
     fn reset(&mut self) {
         self.is_marked = false;
+        self.mark_buffer.restart();
     }
 
     fn clear_buffer(&mut self) {
@@ -296,5 +305,36 @@ mod tests {
             reader.read(&mut buf).unwrap(),
             "Should have read entire buffer"
         );
+    }
+
+    #[test]
+    fn test_read_with_popping_bytes() {
+        let input_data = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let data = Cursor::new(input_data.clone());
+        let mut reader = BufferedMarkableReader::new(data);
+        let mut single_byte_buffer = vec![0_u8; 1];
+
+        for i in 0..input_data.len() - 1 {
+            reader.mark();
+            let expected = input_data[i..i + 2].to_vec();
+            let mut actual = [0_u8; 2];
+            reader
+                .read_exact(&mut actual)
+                .expect("should always be able to read 2 bytes");
+            assert_eq!(
+                expected, actual,
+                "bytes at index {i} should be {expected:?} but were {actual:?}"
+            );
+
+            reader.reset();
+            reader
+                .read_exact(&mut single_byte_buffer)
+                .expect("should be able to read single byte");
+            assert_eq!(
+                single_byte_buffer[0], input_data[i],
+                "popped byte at index {i} should be {i} but was {}",
+                single_byte_buffer[0]
+            );
+        }
     }
 }

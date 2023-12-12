@@ -26,6 +26,17 @@ impl Buffer {
         dropped
     }
 
+    pub fn purge_read(&mut self) -> usize {
+        let dropped = self.pos;
+        self.buffer.drain(0..self.pos);
+        self.pos = 0;
+        dropped
+    }
+
+    pub fn restart(&mut self) {
+        self.pos = 0;
+    }
+
     /// Reads values from this buffer into the provided `buf`.
     /// Returns the number of bytes placed in the provided `buf`
     pub fn read_into(&mut self, buf: &mut [u8], offset: usize) -> usize {
