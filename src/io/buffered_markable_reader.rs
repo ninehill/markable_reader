@@ -181,7 +181,7 @@ where
 }
 
 impl<R> MarkerStream for BufferedMarkableReader<R> {
-    /// Marks the location of the inner stream. From tis point forward
+    /// Marks the location of the inner stream. From this point forward
     /// reads will be cached. If the stream was marked prior to this call
     /// the current buffer will be discarded.
     ///
